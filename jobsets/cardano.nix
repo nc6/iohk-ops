@@ -9,6 +9,7 @@ with import (fixedNixpkgs + "/pkgs/top-level/release-lib.nix") { inherit support
 
 let
   iohkpkgs = import ./../default.nix { inherit pkgs; };
+  nix-darwin-tools = import ../nix-darwin;
   jobs = mapTestOn ((packagePlatforms iohkpkgs) // {
     iohk-ops = [ "x86_64-linux" ];
     github-webhook-util = [ "x86_64-linux" ];
@@ -30,13 +31,14 @@ let
 in pkgs.lib.fix (jobsets: {
   inherit (jobs) iohk-ops iohk-ops-integration-test nixops;
   inherit (iohkpkgs) checks;
-  inherit tests cardanoRelease;
+  inherit tests cardanoRelease nix-darwin-tools;
   required = pkgs.lib.hydraJob (pkgs.releaseTools.aggregate {
     name = "iohk-ops-required-checks";
     constituents =
       let
         all = x: map (system: x.${system}) supportedSystems;
     in [
+      jobsets.nix-darwin-tools.tools
       jobsets.iohk-ops.x86_64-linux
       (pkgs.lib.collect (x : x ? outPath) jobsets.cardanoRelease)
       (builtins.attrValues jobsets.tests)
