@@ -418,7 +418,7 @@ with goguenPkgs; {
     systemd.services.mantis = {
       requires = [ "${cfg.vmType}.service" "keys.target" ];
       wantedBy = [ "multi-user.target" ];
-      after = [ "keys.target" ];
+      after = [ "${cfg.vmType}.service" "keys.target" ];
       unitConfig.RequiresMountsFor = "/data";
       enable = true;
       path = with pkgs; [ gawk gnused openjdk8 mantis ];
@@ -447,11 +447,22 @@ with goguenPkgs; {
 
     systemd.services."${cfg.vmType}" = {
       enable = true;
+      path = with pkgs; [ gawk gnused openjdk8 goguenPkgs."${cfg.vmType}" ];
       serviceConfig = {
-        TimeoutStartSec = "0";
+        PermissionsStartOnly = true;
+        User = "mantis";
+        Group = "users";
+        # Allow a maximum of 5 retries separated by 30 seconds, in total capped by 200s
         Restart = "always";
+        RestartSec = 30;
+        StartLimitInterval = 200;
+        StartLimitBurst = 5;
+        KillSignal = "SIGINT";
+        WorkingDirectory = cfg.dataDir;
+        PrivateTmp = true;
+        Type = "notify";
       };
-      script = "${goguenPkgs.${cfg.vmType}}/${cfg.vmType}-vm 8888 0.0.0.0";
+      script = "${cfg.vmType}-vm 8888 0.0.0.0";
     };
 
     services.mantis = {
