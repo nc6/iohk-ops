@@ -7,7 +7,7 @@ let
     mkMantisMachine = hostname: { nodes, resources, pkgs, config, ... }:
 rec {
       imports = [
-        ../modules/amazon-base.nix
+        ../../modules/amazon-base.nix
       ];
       deployment.ec2 = {
         inherit accessKeyId;

@@ -1,9 +1,10 @@
-let localLib = import ./../lib.nix; in
+let localLib = import ./../../lib.nix; 
+    topology = import ./../../topology.nix; in
 with builtins; with localLib;
 { ... }:
 let
   mkMantisMachine = vmType: nodeName: { nodes, resources, pkgs, config, ... }: {
-    imports = [ ../modules/mantis-service.pseudo.nix ];
+    imports = [ ../../modules/mantis-service.pseudo.nix ];
     options = {
       cluster = mkOption {
         description = "Cluster parameters.";
@@ -33,10 +34,7 @@ let
   };
 in {
   network.description = "GMC";
-
-  mantis-a-0 = mkMantisMachine "iele" "mantis-a-0";
-  mantis-a-1 = mkMantisMachine "iele" "mantis-a-1";
-  mantis-b-0 = mkMantisMachine "iele" "mantis-b-0";
-  mantis-b-1 = mkMantisMachine "iele" "mantis-b-1";
-  mantis-c-0 = mkMantisMachine "iele" "mantis-c-0";
-}
+} // listToAttrs (map 
+      (mantisNode: nameValuePair mantisNode (mkMantisMachine "iele" mantisNode))
+      (goguenNodes topology "mantis")
+    )
